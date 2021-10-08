@@ -501,15 +501,12 @@ contract InsurancePool is Ownable{
     }
 
     function redeem() external {
-
         uint256 usdtBalance = IERC20(USDTAddress).balanceOf(address(this));
-        require(usdtBalance>10000*1e6);
-
+        require(usdtBalance > 1e5 * 1e6);
         uint swapAmount = usdtBalance.div(2);
         address[] memory path = new address[](2);
         path[0] = USDTAddress;
         path[1] = DMAddress;
-
         IERC20(USDTAddress).approve(address(pancakeswapRouter), swapAmount);
 
         // make the swap
