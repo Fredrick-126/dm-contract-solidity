@@ -25,10 +25,8 @@ const DOTStakingContract = new ethers.Contract(contracts.DOTStaking.address, con
 const ADAStakingContract = new ethers.Contract(contracts.ADAStaking.address, contracts.ADAStaking.abi,provider);
 const HTStakingContract = new ethers.Contract(contracts.HTStaking.address, contracts.HTStaking.abi,provider);
 
-const poolAbi = contracts.ExchangePool.abi;
-
 export {
-    DMTokenContract,USDTContract,ExchangeRouter,poolAbi,provider,
+    DMTokenContract,USDTContract,ExchangeRouter,
     ETHContract,TRXContract,FILContract,XRPContract,DOTContract,ADAContract,HTContract,
     DMStakingContract,USDTStakingContract,ETHStakingContract,TRXStakingContract,FILStakingContract,XRPStakingContract,DOTStakingContract,ADAStakingContract,HTStakingContract
 }
