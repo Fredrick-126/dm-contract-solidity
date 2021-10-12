@@ -25,6 +25,7 @@ const deployStaking =async (stakeTokenAddress,rewardTokenAddress,price)=>{
 
     await staking.deployed();
     
+    console.log("staking deployed to:", staking.address);
     return staking.address;
 }
 

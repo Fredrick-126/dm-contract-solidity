@@ -207,12 +207,7 @@ contract Mintable is Ownable {
 		isMinters[_newMinter] = true;
 		emit SetMinters(_newMinter,true);
 	}
-	function setMinters(address[] memory _minters) external onlyOwner {
-		for(uint i=0; i<_minters.length; i++) {
-			isMinters[_minters[i]] = true;
-			emit SetMinters(_minters[i], true);
-		}
-	}
+
 	function disableMinter(address _minter) external onlyOwner {
 		isMinters[_minter] = false;
 		emit SetMinters(_minter,false);
@@ -428,8 +423,6 @@ interface IPancakeswapRouter{
 		) external;
 }
 
-
-// Dman Token contract written by Galaxy Foundation Team bussiness email:xhe18623@gmail.com
 contract DMToken is Context, IERC20, Mintable {
 	using SafeMath for uint;
 
@@ -721,13 +714,13 @@ contract DMToken is Context, IERC20, Mintable {
 	}
 
 	uint[][] unlockSteps = [
-		[8,   5 minutes],
-		[18,  8 minutes],
-		[30,  12 minutes],
-		[45,  15 minutes],
-		[62,  18 minutes],
-		[80,  21 minutes],
-		[100, 25 minutes]
+		[8,   5],
+		[18,  8],
+		[30,  12],
+		[45,  15],
+		[62,  18],
+		[80,  21],
+		[100, 25]
 		/* [8,   40  days],
 		[18,  90  days],
 		[30,  150 days],
@@ -749,16 +742,16 @@ contract DMToken is Context, IERC20, Mintable {
 		require(presaleTotal > _quantity && block.timestamp < startTime + presaleEndTime,"presale ended");
 		require(presaleLimit1 <= presales[_sender].amount + _quantity, "_sender must be greater or equals than limit1");
 		require(presaleLimit2 >= presales[_sender].amount + _quantity, "presale total must be less or equals than limit2");
-		//send USDT fund from invesotr to Contract Owner
+		
 		IERC20(USDTAddress).transferFrom(_sender, owner(), _usdt);
-		_mint(_sender, _quantity);//mint equal amount of DM token
-		presales[_sender].amount += _quantity;//lump sum DM token minted
+		_mint(_sender, _quantity);
+		presales[_sender].amount += _quantity;
 		presaleTotal -= _quantity;
 		presaledTotal += _quantity;
 
 		emit Presaled(_sender, _usdt, _quantity);
 	}
-	//private sale investor can claim USDT reward from USDT dividens pool
+
 	function claimReward() external {
 		address _sender = msg.sender;
 		uint rewardBalance = getReward(_sender);
@@ -773,12 +766,11 @@ contract DMToken is Context, IERC20, Mintable {
 
 		emit ClaimReward(_sender, rewardBalance);
 	}
-	//caculate the reward for specified user. Formula =>  percentage(use invested)* pool(usdt)
+
 	function getReward(address account) public view returns (uint rewardBalance) {
 		rewardBalance = presaledTotal==0 ? 0 : rewardPoolBalance.add(rewardedTotalBalance).mul(presales[account].amount).div(presaledTotal).sub(presales[account].rewards);
 	}
 
-	//user manaully unlock the DM amount
 	function unlock() external {
 		address _sender = msg.sender;
 		uint _unlockAmount = getUnlockAmount(_sender);
@@ -790,7 +782,6 @@ contract DMToken is Context, IERC20, Mintable {
 		emit Unlocked(_sender,_unlockAmount,timeStamp);
 	}
 
-	//getUnlock Amount
 	function getUnlockAmount(address account) public view returns (uint){
 		uint time = block.timestamp;
 		for(uint i = unlockSteps.length - 1; i > 0; i--) {
@@ -828,7 +819,6 @@ contract DMToken is Context, IERC20, Mintable {
 		params[i++] = rewardedTotalBalance;
 		params[i++] = insurancePoolBalance;
 		params[i++] = insurancePoolBurnt;
-		
 	}
 
 

@@ -1,6 +1,6 @@
 
 const fs = require('fs');
-const colors = require('colors');
+
 const {deployDMToken} = require ("./1_TokenDeploy");
 const { deployUSDT } = require('./2_USDTDeploy');
 const { deployStaking } = require('./3_StakingDeploy');
@@ -15,7 +15,7 @@ const {ethers} = require("ethers");
 const hre = require("hardhat");
 
 async function main() {
-	
+
 	// get network
 	let signer = await hre.ethers.getSigner();
 	
@@ -25,8 +25,6 @@ async function main() {
 	/* -------------- exchange --------------- */
 
 	let ExchangeRouterAddress
-
-	console.log("starting with signer ", signer.address.yellow);
 	if(chainId === 4002){
 		//fantom testnet
 		ExchangeRouterAddress = "0x8e12fD09f7A761AABaD0C8E0e574d797FE27b8A6";
@@ -41,15 +39,15 @@ async function main() {
 	var usdtAddress;
 	if(chainId === 4002){
 		usdtAddress= await deployUSDT(ExchangeRouterAddress);
-		console.log("Fake USDT Deployed at ", usdtAddress.yellow);
-	} else usdtAddress = process.env["USDT"];
+	} 
+	else usdtAddress = process.env["USDT"];
 
 
 	/* -------------- DM --------------- */
 
 	let dMToken = await deployDMToken(usdtAddress,ExchangeRouterAddress);
 	let dMTokenAddress = dMToken.address;
-	console.log('DM deployed at ', dMTokenAddress.yellow);
+
 
 	/* -------------- mining tokens --------------- */
 
@@ -70,28 +68,26 @@ async function main() {
 		// testnet
 		stakeTokens[stakeTokenList[1]] = {address:usdtAddress, abi:IERC20.abi};
 		for(let i = 2; i< stakeTokenList.length; i++){
-			let tokenAddress = (await deployUSDT(ExchangeRouterAddress));
-			console.log('Fake '+stakeTokenList[i-2] + " deployed at ", tokenAddress.yellow);
-			stakeTokens[stakeTokenList[i]] = {address:tokenAddress, abi:IERC20.abi};
+		let tokenAddress = (await deployUSDT(ExchangeRouterAddress));
+		console.log(tokenAddress)
+		stakeTokens[stakeTokenList[i]] = {address:tokenAddress, abi:IERC20.abi};
 		}
 	}
 	else {
 		//mainnet
 		for(let i = 1; i<stakeTokenList.length; i++){
-			let tokenAddress = process.env[stakeTokenList[i]];
-			stakeTokens[stakeTokenList[i]] = {address:tokenAddress, abi:IERC20.abi};
+		let tokenAddress = process.env[stakeTokenList[i]];
+		stakeTokens[stakeTokenList[i]] = {address:tokenAddress, abi:IERC20.abi};
 		}
 	}
 
 	/* -------------- add liquidity -----------------*/
 
-	console.log('providing liquidity...');
-
 	var tx = await dMToken.approve(ExchangeRouterAddress, ethers.utils.parseUnits("100000", 18));
 	await tx.wait();
 
 	var exchangeContract = new ethers.Contract(ExchangeRouterAddress,ExchangeRouter.abi, signer);
-	await exchangeContract.addLiquidity(dMToken.address, stakeTokens[stakeTokenList[1]].address, ethers.utils.parseUnits("100000",18),ethers.utils.parseUnits("1000",6),"0","0",signer.address,"1111111111111111111111111");
+	exchangeContract.addLiquidity(dMToken.address, stakeTokens[stakeTokenList[1]].address, ethers.utils.parseUnits("100000",18),ethers.utils.parseUnits("1000",6),"0","0",signer.address,"1111111111111111111111111");
 
 	/* -------------- staking contract -----------------*/
 	
@@ -122,16 +118,13 @@ async function main() {
 	/* ------------ stake pool -------------- */
 
 	var stakingContracts = {};
-	var statkingArray = []
 	for(var i = 0; i < stakingContractsList.length; i++){
 		var stakingContractAddress = await deployStaking(stakeTokens[stakeTokenList[i]].address, dMTokenAddress, stakeTokenPrices[i]); 
-		console.log('Staking pair '+stakingContractsList[i] + " deployed at ", stakingContractAddress.yellow);
-		stakingContracts[stakingContractsList[i]] = {address:stakingContractAddress, abi:Staking.abi};
-		statkingArray.push(stakingContractAddress);
-		// await dMToken.setMinter(stakingContractAddress);
 		
+		stakingContracts[stakingContractsList[i]] = {address:stakingContractAddress, abi:Staking.abi};
+		await dMToken.setMinter(stakingContractAddress);
 	}
-	await dMToken.setMinters(statkingArray);
+
 	/* ------------ objects -------------- */
 
 	var ExchangePool = {abi : Pool.abi}
@@ -140,16 +133,17 @@ async function main() {
 
 	contractObject = {...contractObject, ...stakeTokens, ...stakingContracts}
 
-	fs.writeFileSync(`./src/contracts/${network.chainId}.json`,JSON.stringify(contractObject, undefined, 4));
-	tx = await dMToken.startPresale();
-	await tx.wait();
-	
-}
+	fs.writeFile(`./src/contracts/${network.chainId}.json`,JSON.stringify(contractObject, undefined, 4), function(err,content){
+		if (err) throw err;
+		console.log('complete');
+	});
+	}
 
-main().then(() => {
-	console.log('complete'.green);
-})
-.catch((error) => {
-	console.error(error);
-	process.exit(1);
-});
+	main()
+	.then(() => {
+		// process.exit(0)
+	})
+	.catch((error) => {
+		console.error(error);
+		process.exit(1);
+	});
