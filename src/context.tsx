@@ -1,11 +1,10 @@
-import React ,{createContext, useContext, useState, useEffect, useMemo} from 'react';
+import React ,{createContext, useContext, useMemo} from 'react';
 
 import { toast } from 'react-toastify';
 import {ethers} from "ethers"
 import {DMTokenContract,USDTContract,ExchangeRouter,poolAbi,provider} from "./contracts";
 import {tips, NF, fromValue, toValue, tokenData, errHandler} from './util';
 import { useWallet } from "use-wallet";
-import axios from "axios";
 
 
 const AppContext = createContext<any>({})
@@ -41,7 +40,7 @@ export interface PoolResearve {
 
 export default function Provider ({children}) {
     const wallet = useWallet();    
-	const [status, setStatus] = useState<ContractStatus>({
+	const [status, setStatus] = React.useState<ContractStatus>({
 		inited: false,
 		available: false,
 
@@ -60,24 +59,10 @@ export default function Provider ({children}) {
 		insuranceBurnt: 0,
 	})
 
-	const [poolBalance , setPoolBalance] = useState<PoolResearve>({
+	const [poolBalance , setPoolBalance] = React.useState<PoolResearve>({
 		reserve0:0,
 		reserve1:0
 	})
-
-	const [tokenPrices, setTokenPrices] = useState<any>({
-		"DM": 1,
-		"USDT": 1,
-		"ETH": 3501.15,
-		"TRX": 0.094338,
-		"FIL": 68.66,
-		"XRP": 1,
-		"DOT": 33.69,
-		"ADA": 2.12,
-		"HT": 7.25
-	})
-
-	const [stakeRate, setStakeRate] = useState<any>({});
 
 	React.useEffect(()=>{
 		checkBalance(wallet.account);
@@ -97,19 +82,6 @@ export default function Provider ({children}) {
 			errHandler(err)
 		}
 	}
-
-	const updateTokenPrices = async () => {
-		try{
-			let tokenPrices = await axios.post(process.env.REACT_APP_ENDPOINT+"api/getCoinPrice");
-			setTokenPrices(tokenPrices.data)
-		}catch(err){
-
-		}
-	}
-
-	useEffect(()=>{
-		setInterval(updateTokenPrices,15000);
-	},[])
 
 	const checkBalance = async (account) => {
 		console.log('checkBalance')
@@ -163,12 +135,11 @@ export default function Provider ({children}) {
 				()=>[
 					status,
 					poolBalance,
-					tokenPrices,
 					{
 						checkBalance
 					}
 				],
-				[status,poolBalance,tokenPrices]
+				[status,poolBalance]
 			)}
 		>
 			{children}

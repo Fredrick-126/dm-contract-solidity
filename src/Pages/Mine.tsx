@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { Link } from "react-router-dom";
 /* import { useSelector} from 'react-redux'; */
 import Layout from '../components/Layout';
@@ -14,7 +14,7 @@ import {AreaChart, Area, XAxis, YAxis, CartesianGrid, ResponsiveContainer} from 
 import Skeleton, {SkeletonTheme} from 'react-loading-skeleton';
 
 const Mine = () => {
-	const [status,,tokenPrices] = useAppContext();
+	const [status,{checkBalance}] = useAppContext();
 	const [data] = React.useState<MineState>({
 		pairs: [
 			{token1:'USDT',token2:'DM',price:6718.75,priceCN:4561150.44,daily:0.01,apr:30.34},
@@ -36,10 +36,6 @@ const Mine = () => {
 			{time:'22:00', y:500}
 		]
 	});
-
-	useEffect(()=>{
-		console.log("tokenPrices",tokenPrices);
-	},[])
 	const chart = {
 		min: -1000,
 		max: 0
@@ -139,8 +135,8 @@ const Mine = () => {
 									<span>{v.token1}/{v.token2}</span>
 								</td>
 								<td>
-									<div>$ {tokenPrices[v.token1]}</div>
-									<small>￥ {parseFloat((tokenPrices[v.token1]*6.4).toFixed(3))}</small>
+									<div>$ {v.price}</div>
+									<small>￥ {v.priceCN}</small>
 								</td>
 								<td>
 									<div>{v.daily} DM</div>
