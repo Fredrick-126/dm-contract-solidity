@@ -1,49 +1,56 @@
-import React, { useEffect } from 'react';
-import { Link } from "react-router-dom";
-/* import { useSelector} from 'react-redux'; */
-import Layout from '../components/Layout';
+import React, { useEffect } from 'react'
+import { Link } from "react-router-dom"
+import Layout from '../components/Layout'
 import Icons from '../components/Icons'
-import imgBgCell from '../assets/bg-cell.webp';
-import imgCurve from '../assets/mine-curve.svg';
-import imgRadial from '../assets/mine-radial.webp';
-import imgSpin from '../assets/spin.svg';
+import imgBgCell from '../assets/bg-cell.webp'
+import imgCurve from '../assets/mine-curve.svg'
+import imgRadial from '../assets/mine-radial.webp'
+import imgSpin from '../assets/spin.svg'
+import {useWallet} from 'use-wallet';
 
-import {MineState} from '../@types/store';
-import {useAppContext} from '../context';
-import {AreaChart, Area, XAxis, YAxis, CartesianGrid, ResponsiveContainer} from 'recharts';
-import Skeleton, {SkeletonTheme} from 'react-loading-skeleton';
+import {MineState} from '../@types/store'
+import {useAppContext} from '../context'
+import {AreaChart, Area, XAxis, YAxis, CartesianGrid, ResponsiveContainer} from 'recharts'
+import Skeleton, {SkeletonTheme} from 'react-loading-skeleton'
 
 const Mine = () => {
-	const [status,,tokenPrices] = useAppContext();
+	const wallet = useWallet();
+	const [status,,prices] = useAppContext();
+	/* const Daily = 328767; */
+
 	const [data] = React.useState<MineState>({
 		pairs: [
-			{token1:'USDT',token2:'DM',price:6718.75,priceCN:4561150.44,daily:0.01,apr:30.34},
-			{token1:'ETH',token2:'DM',price:6718.75,priceCN:4561150.44,daily:0.01,apr:-30.34},
-			{token1:'TRX',token2:'DM',price:6718.75,priceCN:4561150.44,daily:0.01,apr:30.34},
-			{token1:'FIL',token2:'DM',price:6718.75,priceCN:4561150.44,daily:0.01,apr:30.34},
-			{token1:'XRP',token2:'DM',price:6718.75,priceCN:4561150.44,daily:0.01,apr:30.34},
-			{token1:'DOT',token2:'DM',price:6718.75,priceCN:4561150.44,daily:0.01,apr:30.34},
-			{token1:'ADA',token2:'DM',price:6718.75,priceCN:4561150.44,daily:0.01,apr:-30.34},
-			{token1:'HT',token2:'DM',price:6718.75,priceCN:4561150.44,daily:0.01,apr:30.34},
-			{token1:'DM',token2:'DM',price:6718.75,priceCN:4561150.44,daily:0.01,apr:-30.34},
+			{token1:'DM',   token2:'DM',  reward:status.pools["DM"].reward,    daily:status.pools['DM'].daily,   apr: status.pools['DM'].apr },  
+			{token1:'USDT', token2:'DM',  reward:status.pools["USDT"].reward,  daily:status.pools['USDT'].daily, apr: status.pools['USDT'].apr },  
+			{token1:'ETH',  token2:'DM',  reward:status.pools["ETH"].reward,   daily:status.pools['ETH'].daily,  apr: status.pools['ETH'].apr },  
+			{token1:'TRX',  token2:'DM',  reward:status.pools["TRX"].reward,   daily:status.pools['TRX'].daily,  apr: status.pools['TRX'].apr },  
+			{token1:'FIL',  token2:'DM',  reward:status.pools["FIL"].reward,   daily:status.pools['FIL'].daily,  apr: status.pools['FIL'].apr },  
+			{token1:'XRP',  token2:'DM',  reward:status.pools["XRP"].reward,   daily:status.pools['XRP'].daily,  apr: status.pools['XRP'].apr },  
+			{token1:'DOT',  token2:'DM',  reward:status.pools["DOT"].reward,   daily:status.pools['DOT'].daily,  apr: status.pools['DOT'].apr },  
+			{token1:'ADA',  token2:'DM',  reward:status.pools["ADA"].reward,   daily:status.pools['ADA'].daily,  apr: status.pools['ADA'].apr },  
+			{token1:'HT',   token2:'DM',  reward:status.pools["HT"].reward,    daily:status.pools['HT'].daily,   apr: status.pools['HT'].apr },  
 		],
+
 		chart: [
 			{time:'17:00', y:100},
 			{time:'18:00', y:200},
-			{time:'19:00', y:150},
+			{time:'19:00', y:150}, 
 			{time:'20:00', y:300},
 			{time:'21:00', y:250},
 			{time:'22:00', y:500}
 		]
 	});
+	const connected = wallet.status==="connected"
 
-	useEffect(()=>{
-		console.log("tokenPrices",tokenPrices);
-	},[])
+	/* useEffect(()=>{
+		console.log("prices",prices);
+	},[]) */
+
 	const chart = {
 		min: -1000,
 		max: 0
 	};
+
 	for(let v of data.chart) {
 		if (v.y && chart.max < v.y) {
 			chart.max = v.y;
@@ -54,7 +61,7 @@ const Mine = () => {
 			chart.min = v.y;
 		}
 	}
-	/* const L = useSelector(state => state.contract.L); */
+	
 	return <Layout className="mine">
 		<div style={{position:'relative'}}>
 			<div>
@@ -139,11 +146,11 @@ const Mine = () => {
 									<span>{v.token1}/{v.token2}</span>
 								</td>
 								<td>
-									<div>$ {tokenPrices[v.token1]}</div>
-									<small>￥ {parseFloat((tokenPrices[v.token1]*6.4).toFixed(3))}</small>
+									<div>{connected ? '$ '+v.reward : '-'}</div>
+									<small>{connected ? '￥ ' + Number((Number(v.reward) *prices.CNY).toFixed(2)) : '-'}</small>
 								</td>
 								<td>
-									<div>{v.daily} DM</div>
+									<div>{connected ? v.daily + ' DM' : '-'}</div>
 								</td>
 								<td>
 									<Link to = {`/mine/action/${v.token1}`}>
@@ -154,7 +161,7 @@ const Mine = () => {
 						</tbody>
 					</table>
 				</div>
-				<div className="mt-3" style={{backgroundColor:'#2e3548', borderRadius: 5, padding:20}}>
+				{/* <div className="mt-3" style={{backgroundColor:'#2e3548', borderRadius: 5, padding:20}}>
 					<div style={{display:'flex',justifyContent:'space-between'}}>
 						<div className="text-center">
 							<h3>选区总量</h3>
@@ -179,7 +186,7 @@ const Mine = () => {
 							<div>12</div>
 						</div>
 					</div>
-				</div>
+				</div> */}
 				<div className="mt-4 text-center">
 					<h1><span style={{color:'#cc0404'}}>DM</span><span style={{color:'#14d1cb'}}>Staking</span></h1>
 					<h2 className="mt-3">流动性总锁仓</h2>

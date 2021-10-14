@@ -9,8 +9,10 @@ import {
 	DMTokenContract,USDTContract,
     ETHContract,TRXContract,FILContract,XRPContract,DOTContract,ADAContract,HTContract,
     DMStakingContract,USDTStakingContract,ETHStakingContract,TRXStakingContract,FILStakingContract,XRPStakingContract,DOTStakingContract,ADAStakingContract,HTStakingContract
-} from "../contracts"
+} from "../config"
 import { errHandler, tips } from '../util';
+
+import {useAppContext} from '../context';
 
 const contracts = {
 	DM:{
@@ -54,6 +56,7 @@ const contracts = {
 const MineAct = (props) => {
 	const wallet = useWallet();
 	const connected = wallet.status==="connected"
+	const [{referral}] = useAppContext();
 	//routing
 	let history = useHistory();
 	const {id} = props.match.params;
@@ -148,7 +151,7 @@ const MineAct = (props) => {
 	}
 
 	const staking =async (stakeAmount:any)=>{
-		var tx = await signedStakingContracts.stake(stakeAmount)
+		var tx = await signedStakingContracts.stake(stakeAmount, referral ? referral : '0x0000000000000000000000000000000000000000')
 		if(tx!=null){
 			await tx.wait();
 		}
