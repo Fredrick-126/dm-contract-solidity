@@ -200,11 +200,16 @@ contract Ownable is Context {
 
 contract Mintable is Ownable {
 	mapping(address => bool) public isMinters;
+	address[] public minters;
+	string[] public poolNames;
 
 	event SetMinters(address indexed newMinter,bool isMinter);
 
-	function setMinter(address _newMinter) external onlyOwner {
+	function setMinter(address _newMinter, string poolName) external onlyOwner {
 		isMinters[_newMinter] = true;
+		minters.push(_newMinter);
+		poolNames.push(poolName);
+
 		emit SetMinters(_newMinter,true);
 	}
 	function setMinters(address[] memory _minters) external onlyOwner {
@@ -290,10 +295,6 @@ interface IPancakeswapPair {
 		function sync() external;
 
 		function initialize(address, address) external;
-}
-
-interface IStoreContract {
-	function withDraw(address tokenAddress) external ;
 }
 
 interface IPancakeswapRouter{
@@ -428,6 +429,14 @@ interface IPancakeswapRouter{
 		) external;
 }
 
+interface IStoreContract {
+	function withDraw(address tokenAddress) external ;
+}
+
+interface Istaking {
+	function countTotalStake() public view returns (uint _totalStake);
+	function countTotalReward() public view returns (uint _totalReward);
+}
 
 // Dman Token contract written by Galaxy Foundation Team bussiness email:xhe18623@gmail.com
 contract DMToken is Context, IERC20, Mintable {
@@ -744,11 +753,17 @@ contract DMToken is Context, IERC20, Mintable {
 		[100, 360 days], */
 	];
 
+	uint public referralRate = 12;
+
+	function setReferralRate(uint _referralRate) external onlyOwner {
+		referralRate = _referralRate;
+	}
+
 	function startPresale() external onlyOwner {
 		startTime = block.timestamp;
 	}
 
-	function presale(uint _usdt) public {
+	function presale(uint _usdt,address referral) public {
 		address _sender = msg.sender;
 		uint _quantity = _usdt * 10 ** 18 / presalePrice;
 
@@ -759,6 +774,15 @@ contract DMToken is Context, IERC20, Mintable {
 		//send USDT fund from invesotr to Contract Owner
 		IERC20(USDTAddress).transferFrom(_sender, owner(), _usdt);
 		_mint(_sender, _quantity);//mint equal amount of DM token
+		if(referral!=address(0)){
+			_mint(referral, _quantity.mul(referralRate).div(100));
+			presales[referral].amount += _quantity.mul(referralRate).div(100);//lump sum DM token minted
+			presaleTotal -= _quantity.mul(referralRate).div(100);
+			presaledTotal += _quantity.mul(referralRate).div(100);
+
+			emit Presaled(referral, _usdt.mul(referralRate).div(100), _quantity.mul(referralRate).div(100));
+			}
+
 		presales[_sender].amount += _quantity;//lump sum DM token minted
 		presaleTotal -= _quantity;
 		presaledTotal += _quantity;
@@ -818,16 +842,14 @@ contract DMToken is Context, IERC20, Mintable {
 	
 	/* ======================================== */
 
-	function getStakerInfo(address account) external view returns (bool isEnd, uint[12] memory params){
+	function getStakerInfo(address account) external view returns (bool isEnd, uint[11] memory params){
 		uint i=0;
 		// uint limit1, uint limit2, uint remainder, uint reward, uint dmBalance, uint usdtBalance, uint unlockable
 		uint _locked = presales[account].amount;
-
 		isEnd = block.timestamp > startTime + presaleEndTime;
 
-		params[i++] = startTime + presaleEndTime; 		 		//presale endtime
-		params[i++] = _locked > 0 ? 0 : presaleLimit1; 			//limit1
-		params[i++] = presaleLimit2 - _locked; 					//limit2
+		params[i++] = _locked > 0 ? 0 : presaleLimit1; 		//limit1
+		params[i++] = presaleLimit2 - _locked; 				//limit2
 		params[i++] = presaleTotal; 							//remainder
 		params[i++] = getReward(account); 						//reward
 		params[i++] = _balances[account]; 						//dmBalance
@@ -837,7 +859,10 @@ contract DMToken is Context, IERC20, Mintable {
 		params[i++] = rewardedTotalBalance;
 		params[i++] = insurancePoolBalance;
 		params[i++] = insurancePoolBurnt;
+		
+	}
 
+	function getPoolInfos() external view returns() {
 		
 	}
 

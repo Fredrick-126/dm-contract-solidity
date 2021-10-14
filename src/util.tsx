@@ -1,6 +1,6 @@
 import { toast } from 'react-toastify';
 import {ethers} from "ethers"
-import {DMTokenContract,USDTContract} from "./config";
+import {DMTokenContract,USDTContract} from "./contracts";
 
 export const errHandler = (err:any) => {
 	if (err) {

@@ -9,7 +9,7 @@ import {
 	DMTokenContract,USDTContract,
     ETHContract,TRXContract,FILContract,XRPContract,DOTContract,ADAContract,HTContract,
     DMStakingContract,USDTStakingContract,ETHStakingContract,TRXStakingContract,FILStakingContract,XRPStakingContract,DOTStakingContract,ADAStakingContract,HTStakingContract
-} from "../config"
+} from "../contracts"
 import { errHandler, tips } from '../util';
 
 const contracts = {

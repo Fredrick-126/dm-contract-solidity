@@ -6,14 +6,20 @@ import imgBG03 from '../assets/swap-bg-03.webp';
 import imgIC01 from '../assets/swap-ic-01.webp';
 import {ethers} from "ethers"
 import {useWallet} from 'use-wallet';
-import {DMTokenContract} from "../config";
+import {DMTokenContract} from "../contracts";
 
 import {useAppContext} from '../context';
 import Skeleton, {SkeletonTheme} from 'react-loading-skeleton';
 
 const PRICE = 0.005;
 
-const Presale = () => {
+const Presale = (props) => {
+	const { match } = props;
+	var referralAddress = "";
+	if(match.params.id !== "")
+		referralAddress = match.params.id
+
+	console.log(referralAddress);
 	const wallet = useWallet();
 
 	const [token1Status,setToken1Status] = useState({token:"USDT",amount:200})
@@ -47,7 +53,7 @@ const Presale = () => {
 		try {
 			if (token1Status.amount<status.limit1 * PRICE) return tips("最少 "+(status.limit1 * PRICE)+" u")
 			if (token1Status.amount>status.limit2 * PRICE) return tips("最大 "+(status.limit2 * PRICE)+" u")
-			if (!connected) return tips("请连接Metamask钱包")
+			if (connected) return tips("请连接Metamask钱包")
 			if (loading) return tips("已进行中")
 			setLoading(true)
 			const provider = new ethers.providers.Web3Provider(wallet.ethereum);
@@ -72,7 +78,7 @@ const Presale = () => {
 			const signer =await provider.getSigner();
 			let swapAmount = toValue(token1Status.amount, token1Status.token)
 			const sigendDMTokenContract = DMTokenContract.connect(signer);
-			var tx = await sigendDMTokenContract.presale(swapAmount);
+			var tx = await sigendDMTokenContract.presale(swapAmount,referralAddress);
 			if(tx) {
 				await tx.wait();
 				await checkBalance(wallet.account);
@@ -105,41 +111,42 @@ const Presale = () => {
 		}
 	} */
 	const unlock = async ()=>{
-		if (!connected) return tips("请连接Metamask钱包")
-		setLoading(true);
 		try {
-			const provider = new ethers.providers.Web3Provider(wallet.ethereum);
-			const signer =await provider.getSigner();
-			const sigendDMTokenContract = DMTokenContract.connect(signer);
-			
-			var tx = await sigendDMTokenContract.unlock();
-			if(tx){
-				await tx.wait();
-				await checkBalance(wallet.account);
+			if(connected) {
+				setLoading(true);
+				const provider = new ethers.providers.Web3Provider(wallet.ethereum);
+				const signer =await provider.getSigner();
+				const sigendDMTokenContract = DMTokenContract.connect(signer);
+				
+				var tx = await sigendDMTokenContract.unlock();
+				if(tx){
+					await tx.wait();
+					await checkBalance(wallet.account);
+				}
+				setLoading(false);
 			}
 		} catch (err:any) {
 			errHandler(err)
 		}
-		setLoading(false);
 	}
 	const claimReward = async ()=>{
-		if (!connected) return tips("请连接Metamask钱包")
-		setLoading(true);
 		try {
-			const provider = new ethers.providers.Web3Provider(wallet.ethereum);
-			const signer =await provider.getSigner();
-			const sigendDMTokenContract = DMTokenContract.connect(signer);
-			
-			var tx = await sigendDMTokenContract.claimReward();
-			if(tx){
-				await tx.wait();
-				await checkBalance(wallet.account);
+			if(connected) {
+				setLoading(true);
+				const provider = new ethers.providers.Web3Provider(wallet.ethereum);
+				const signer =await provider.getSigner();
+				const sigendDMTokenContract = DMTokenContract.connect(signer);
+				
+				var tx = await sigendDMTokenContract.claimReward();
+				if(tx){
+					await tx.wait();
+					await checkBalance(wallet.account);
+				}
+				setLoading(false);
 			}
-			setLoading(false);
 		} catch (err:any) {
 			errHandler(err)
 		}
-		setLoading(false);
 	}
 	
 	return <Layout className="swap">
@@ -191,7 +198,7 @@ const Presale = () => {
 					<div style={{position:'absolute',left:0, right:0, top:0, bottom:0, padding:10, display:'flex', flexDirection:'column'}}>
 						<div style={{flexGrow:1}}>
 							<h3>解仓</h3>
-							<div>{connected ? NF(status.reward, 2) + ' USDT' : '-' }</div>
+							<div>{connected ? NF(status.reward, 2) + ' DM' : '-' }</div>
 						</div>
 						<div className="text-center mt-3">
 							<button disabled={!connected || status.reward===0} className="btn btn-success px-5 round" onClick = {claimReward}>Claim Reward</button>
