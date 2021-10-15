@@ -1,9 +1,10 @@
 import { toast } from 'react-toastify';
 import {ethers} from "ethers"
-import {DMTokenContract,USDTContract} from "./contracts";
+import {DMTokenContract,USDTContract} from "./config";
 
 export const errHandler = (err:any) => {
 	if (err) {
+		console.log(err)
 		if (err.code===4001) {
 			tips("您取消认购了")
 		} else if (err.code==='NETWORK_ERROR') {
@@ -12,6 +13,7 @@ export const errHandler = (err:any) => {
 			tips(err.message)
 		}
 	} else {
+		console.log("无知错误")
 		tips("无知错误")
 	}
 }
@@ -26,7 +28,29 @@ export const tokenData = {
 		contract:DMTokenContract,
 		address:DMTokenContract.address,
 		decimals:18
-	}
+	},
+	ETH :{
+		decimals:18
+	},
+	TRX :{
+		decimals:18
+	},
+	FIL :{
+		decimals:18
+	},
+	XRP :{
+		decimals:18
+	},
+	DOT :{
+		decimals:18
+	},
+	ADA :{
+		decimals:18
+	},
+	HT :{
+		decimals:18
+	},
+
 }
 
 export const toValue = (val, token) => ethers.utils.parseUnits((val).toString(),tokenData[token].decimals)
