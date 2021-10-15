@@ -9,10 +9,8 @@ import {
 	DMTokenContract,USDTContract,
     ETHContract,TRXContract,FILContract,XRPContract,DOTContract,ADAContract,HTContract,
     DMStakingContract,USDTStakingContract,ETHStakingContract,TRXStakingContract,FILStakingContract,XRPStakingContract,DOTStakingContract,ADAStakingContract,HTStakingContract
-} from "../config"
+} from "../contracts"
 import { errHandler, tips } from '../util';
-
-import {useAppContext} from '../context';
 
 const contracts = {
 	DM:{
@@ -56,7 +54,6 @@ const contracts = {
 const MineAct = (props) => {
 	const wallet = useWallet();
 	const connected = wallet.status==="connected"
-	const [,,tokenPrices,{referral}] = useAppContext();
 	//routing
 	let history = useHistory();
 	const {id} = props.match.params;
@@ -93,17 +90,10 @@ const MineAct = (props) => {
 
 	// status
 	const [status,setStatus] = useState({
-		rewardable:0,
-		rewards:0,
-		interest:0,
+		reward:0,
 		stakedAmount:0,
 		stakeAmount:0,
-		withdrawAmount:0,
-
-		total:0,
-		apr:0,
-		multiplier:0,
-		
+		withdrawAmount:0
 	});
 	const [loading,setLoading] = useState(false);
 
@@ -115,16 +105,10 @@ const MineAct = (props) => {
 
 	const setStakedStatus =async ()=>{
 		try{
-			const  res =await signedStakingContracts.getStakeInfo(wallet.account);
-			const {_total, _staking, _rewards, _rewardable} = res;
-			if (tokenPrices[id]) {
-				const price = tokenPrices[id]
-				setStatus({...status, stakedAmount:Number(_staking.div(1e18)), rewards:_rewards, rewardable:Number(_rewardable.div(1e18))});
-				
-				// var reward =await signedStakingContracts.rewards(wallet.account);
-				// setStatus({...status, reward:_reward});	
-			}
-			
+			var stakedAmount =await signedStakingContracts.stakeAmounts(wallet.account);
+			setStatus({...status,stakedAmount:stakedAmount});
+			var reward =await signedStakingContracts.rewards(wallet.account);
+			setStatus({...status,reward:reward});	
 		} catch (err) {
 			errHandler(err)
 		}
@@ -164,7 +148,7 @@ const MineAct = (props) => {
 	}
 
 	const staking =async (stakeAmount:any)=>{
-		var tx = await signedStakingContracts.stake(stakeAmount, referral ? referral : '0x0000000000000000000000000000000000000000')
+		var tx = await signedStakingContracts.stake(stakeAmount)
 		if(tx!=null){
 			await tx.wait();
 		}
@@ -186,12 +170,15 @@ const MineAct = (props) => {
 		setLoading(false);
 	}
 
-	const handleUnstaking = async ()=>{
+	const handleWithdraw = async ()=>{
 		try {
 			if (wallet.status!=="connected") return tips("请连接Metamask钱包")
 			if (loading) return tips("已进行中")
 			setLoading(true);
-			var tx = await signedStakingContracts.unstaking()
+			let tokenDecimals = (await signedTokenContracts.decimals()).toString();
+			let amount = ethers.utils.parseUnits((status.withdrawAmount).toString(),tokenDecimals)
+
+			var tx = await signedStakingContracts.withdraw(amount)
 			if(tx!=null) {
 				await tx.wait();
 			}
@@ -205,17 +192,17 @@ const MineAct = (props) => {
 		<div style={{display:'flex',padding:20}}>
 			<div style={{width:'50%'}}>
 				<h3>已赚取</h3>
-				<code className="h3">{connected ? status.rewards : '-'}</code>
+				<code className="h3">0.00</code>
 			</div>
 			<div style={{width:'50%'}}>
 				<h3>年化利率</h3>
-				<code className="h3">{connected ? status.interest + '%' : '-'}</code>
+				<code className="h3">117.83%</code>
 			</div>
 		</div>
 		<div className="mt-3" style={{backgroundColor:'#2e3548', borderRadius: 5, padding: '20px 50px'}}>
-			<h3><span className="success">DM</span>可赚取</h3>
+			<h3><span className="success">DM</span>已赚取</h3>
 			<div className="mt-4" style={{display:'flex', justifyContent:'space-between'}}>
-				<span className="success">{connected ? status.rewardable : '-'}</span>
+				<span className="success">0.00</span>
 				<button className="h3 btn btn-success round" onClick={handleClaimReward}>收割</button>
 			</div>
 		</div>
@@ -226,27 +213,18 @@ const MineAct = (props) => {
 				<button className="w-100 h3 btn btn-success round" onClick={handleStaking}>解锁钱包</button>
 			</div>
 		</div>
-		<div className="mt-3" style={{backgroundColor:'#2e3548', borderRadius: 5, padding: '20px 50px'}}>
-			<h3><span className="success">DM</span>Unstaking</h3>
-			<div className="mt-4" style={{display:'flex', justifyContent:'space-between'}}>
-				<span className="success">{connected ? status.stakedAmount : '-'}</span>
-			</div>
-			<div className="mt-4">
-				<button className="w-100 h3 btn btn-warning round" onClick={handleUnstaking}>Submit</button>
-			</div>
-		</div>
 		<div className="mt-3 h3" style={{fontWeight:400}}>
 			<div className="mt-3" style={{display:'flex', justifyContent:'space-between'}}>
 				<span>年化利率</span>
-				<span>{connected ? status.interest + '%' : '-'}</span>
+				<span>117.83%</span>
 			</div>
 			<div className="mt-3" style={{display:'flex', justifyContent:'space-between'}}>
 				<span>倍数</span>
-				<span>{connected ? status.multiplier + 'x' : '-'}</span>
+				<span>1x</span>
 			</div>
 			<div className="mt-3" style={{display:'flex', justifyContent:'space-between'}}>
 				<span>流动性</span>
-				<span>{connected ? '$' + status.total : '-'}</span>
+				<span>$ 6,139,061</span>
 			</div>
 		</div>
 	</Layout>;
