@@ -569,7 +569,7 @@ library SafeBEP20 {
 }
 
 
-interface IDmanReferral {
+interface IDafuwengReferral {
     /**
      * @dev Record referral.
      */
@@ -661,7 +661,7 @@ abstract contract Ownable is Context {
 }
 
 //继承大富翁推荐类接口
-contract DmanReferral is IDmanReferral, Ownable {
+contract DafuwengReferral is IDafuwengReferral, Ownable {
     using SafeBEP20 for IBEP20;
 
     mapping(address => bool) public operators;
