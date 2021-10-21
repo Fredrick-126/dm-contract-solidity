@@ -1,10 +1,10 @@
 
 const fs = require('fs');
-const colors = require('colors');
-const {DeployTest} = require ("./1_TokenDeploy");
+require('colors');
+/* const {DeployTest} = require ("./1_TokenDeploy");
 const {deployDMToken} = require ("./1_TokenDeploy");
 const { deployUSDT } = require('./2_USDTDeploy');
-const { deployStaking } = require('./3_StakingDeploy');
+const { deployStaking } = require('./3_StakingDeploy'); */
 /* const { deployInsurrancePool } = require('./4_insurranceDeploy'); */
 
 const contracts = require("../src/config/contracts.json");
@@ -14,8 +14,8 @@ const abiDeployOthers = require("../artifacts/contracts/DeployOthers.sol/DeployO
 
 const abiDMToken = require("../artifacts/contracts/DMToken.sol/DMToken.json");
 const abiRouter = require("../artifacts/contracts/dexRouter.sol/PancakeswapRouter.json");
-const abiERC20 = require("../artifacts/contracts/DMToken.sol/IERC20.json");
-const abiStaking = require("../artifacts/contracts/staking.sol/staking.json");
+/* const abiERC20 = require("../artifacts/contracts/DMToken.sol/IERC20.json"); */
+const abiStaking = require("../artifacts/contracts/staking.sol/Staking.json");
 const abiPair = require("../artifacts/contracts/dexfactory.sol/IPancakeswapPair.json");
 
 const {ethers} = require("ethers");
