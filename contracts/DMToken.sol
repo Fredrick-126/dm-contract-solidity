@@ -454,8 +454,8 @@ contract DMToken is Context, IERC20, Mintable {
 	uint8 private _decimals = 18;
 	string private _symbol = "DM";
 	string private _name = "DMToken";
-	uint private _maxSupply = 1e9 * 10 ** 18; // maxsupply 总计10亿枚代币
-	uint private _totalSupply = 350000000*10**18; // presale amout 预售额度（改为250M）
+	uint private _maxSupply = 1e9 * 10 ** 18; // maxsupply
+	uint private _totalSupply = 250 * 1e6 * 10 ** 18; // presale amout
 
 	uint public liquidityFee = 5;
 	uint public rewardFee = 5;
@@ -512,11 +512,11 @@ contract DMToken is Context, IERC20, Mintable {
 
 		storeAddress = _storeAddress;
 	}
-	//设置社区收费地址
+
 	function setFeeAddress(address _communityAddress) external onlyOwner {
 		communityAddress = _communityAddress;
 	}
-	//合约拥有者修改费率设置
+
 	function setFees(uint[4] memory fees) external onlyOwner {
 		liquidityFee = fees[0];
 		rewardFee = fees[1];
@@ -586,7 +586,7 @@ contract DMToken is Context, IERC20, Mintable {
 		_mint(_msgSender(), amount);
 		return true;
 	}
-	//转账功能，买不扣手续费，卖扣手续费，以DM形式存在合约，一旦有人互转时吧DM换成USDT分红。
+
 	function _transfer(address sender, address recipient, uint amount) internal {
 		require(sender != address(0), "BEP20: transfer from the zero address");
 		require(recipient != address(0), "BEP20: transfer to the zero address");
@@ -597,7 +597,7 @@ contract DMToken is Context, IERC20, Mintable {
 
 
 		// fee 
-		bool isLP = sender==pancakeswapMDUSDTPair || recipient==pancakeswapMDUSDTPair;
+		bool isLP = /* sender==pancakeswapMDUSDTPair ||  */recipient==pancakeswapMDUSDTPair;
 
 		if(isLP) {
 			recieveAmount = amount.mul(100 - getTotalFee()).div(100);
@@ -714,7 +714,7 @@ contract DMToken is Context, IERC20, Mintable {
 		_approve(account, _msgSender(), _allowances[account][_msgSender()].sub(amount, "BEP20: burn amount exceeds allowance"));
 	}
 
-	/* =========== presale & rewards 预售分红功能=========== */
+	/* =========== presale & rewards =========== */
 
 	event ClaimReward(address user,uint amount);
 	event Unlocked(address user,uint amount,uint timeStamp);
@@ -731,9 +731,9 @@ contract DMToken is Context, IERC20, Mintable {
 	uint public presaleLimit2 = 3000 * 10 ** uint(_decimals) * 10 ** USDTDecimals / presalePrice; // is dmtoken
 
 	uint public presaledTotal; // is dmtoken
-	uint public presaleTotal = 350 * 1e6 * 10 ** uint(_decimals); // is dmtoken 最多预售的DM代币数量
+	uint public presaleTotal = 350 * 1e6 * 10 ** uint(_decimals); // is dmtoken
 
-	uint public presaleEndTime = 30 days;
+	uint public presaleEndTime = 5 minutes; // 30 days
 	
 	mapping(address=>Presale) public presales;
 
@@ -744,21 +744,21 @@ contract DMToken is Context, IERC20, Mintable {
 	}
 
 	uint[][] unlockSteps = [
-		[8,   5 minutes],
-		[18,  8 minutes],
-		[30,  12 minutes],
-		[45,  15 minutes],
-		[62,  18 minutes],
-		[80,  21 minutes],
-		[100, 25 minutes]
-		/* [8,   40  days],
+		[8,   15 minutes],
+		[18,  18 minutes],
+		[30,  22 minutes],
+		[45,  25 minutes],
+		[62,  28 minutes],
+		[80,  31 minutes],
+		[100, 35 minutes]
+		/* 
+		[8,   40  days],
 		[18,  90  days],
 		[30,  150 days],
 		[45,  210 days],
 		[62,  270 days],
 		[80,  330 days],
 		[100, 360 days], */
-		
 	];
 
 	uint public referralRate = 12;
@@ -835,7 +835,7 @@ contract DMToken is Context, IERC20, Mintable {
 		if (account==0x0000000000000000000000000000000000000000) return 0;
 		uint time = block.timestamp;
 		for(uint i = unlockSteps.length - 1; i > 0; i--) {
-			if (time > startTime + unlockSteps[i][1]) {
+			if (time > startTime + presaleEndTime + unlockSteps[i][1]) {
 				return presales[account].amount * unlockSteps[i][0] / 100 - presales[account].unlocked;
 			}
 		}
@@ -852,7 +852,7 @@ contract DMToken is Context, IERC20, Mintable {
 	
 	/* ======================================== */
 
-	function getStakerInfo(address account) external view returns (bool isEnd, uint[15] memory params, uint[36] memory pools, bool isFirst){
+	function getStakerInfo(address account) external view returns (bool isEnd, uint[14] memory params, uint[36] memory pools, bool isFirst){
 		uint i=0;
 		// uint limit1, uint limit2, uint remainder, uint reward, uint dmBalance, uint usdtBalance, uint unlockable
 		uint _locked = presales[account].amount;
@@ -876,7 +876,7 @@ contract DMToken is Context, IERC20, Mintable {
 		// var pairAddress = await DMTokenContract.pancakeswapMDUSDTPair();
 		params[i++] = IERC20(USDTAddress).balanceOf(pancakeswapMDUSDTPair);
 		params[i++] = _balances[pancakeswapMDUSDTPair];
-		params[i++] = _balances[address(this)];
+
 
 
 		i=0;
@@ -900,7 +900,7 @@ contract DMToken is Context, IERC20, Mintable {
 
 	uint public insurancePoolBalance;
 	uint public insurancePoolBurnt;
-	//查看是否达到回购条件，4.保险池达到10万USDT时，使用50%资金，自动回购DM销毁 买 ( DMAN-USDT) 交易对
+
 	function redeemable() internal view returns(bool) {
 		return insurancePoolBalance >= 1e5 * 10 ** uint(USDTDecimals);
 	}
